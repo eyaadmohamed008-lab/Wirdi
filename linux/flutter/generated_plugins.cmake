@@ -3,17 +3,11 @@
 #
 
 list(APPEND FLUTTER_PLUGIN_LIST
-<<<<<<< HEAD
   audioplayers_linux
 )
 
 list(APPEND FLUTTER_FFI_PLUGIN_LIST
   jni
-=======
-)
-
-list(APPEND FLUTTER_FFI_PLUGIN_LIST
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
 )
 
 set(PLUGIN_BUNDLED_LIBRARIES)
