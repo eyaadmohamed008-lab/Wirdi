@@ -31,3 +31,12 @@ subprojects {
 tasks.register<Delete>("clean") {
     delete(rootProject.layout.buildDirectory)
 }
+subprojects {
+    afterEvaluate { project ->
+        if (project.name == "flutter") {
+            project.dependencies {
+                add("implementation", "org.codehaus.groovy:groovy:3.0.13")
+            }
+        }
+    }
+}
