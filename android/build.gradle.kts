@@ -1,3 +1,12 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath("commons-lang:commons-lang:2.6")
+    }
+}
 allprojects {
     repositories {
         google()
