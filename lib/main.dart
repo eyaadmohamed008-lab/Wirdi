@@ -566,7 +566,6 @@ class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
   }
 }
 
-// عارض صفحات المصحف: آيات متتالية كنص واحد، تفعيل التحديد بالماوس واللمس، وصوت مستقر
 class MushafHorizontalViewer extends StatefulWidget {
   final int initialPage;
 
@@ -670,7 +669,6 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
     );
   }
 
-  // بناء النص المتتالي للآيات داخل الصفحة بدون سطور منفصلة
   Widget _buildPageContent(int pageNum, Color primaryColor) {
     List<InlineSpan> spans = [];
 
@@ -678,7 +676,6 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
       for (int surah = 1; surah <= 114; surah++) {
         int startPage = quran.getPageNumber(surah, 1);
         
-        // فاصل السورة والبسملة في بداية الصفحة حصرياً
         if (startPage == pageNum) {
           String surahName = quran.getSurahNameArabic(surah);
           
@@ -722,7 +719,6 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
           }
         }
 
-        // تجميع الآيات خلف بعضها بدون فصل سطر لكل آية
         int versesCount = quran.getVerseCount(surah);
         for (int ayah = 1; ayah <= versesCount; ayah++) {
           if (quran.getPageNumber(surah, ayah) == pageNum) {
@@ -1164,10 +1160,10 @@ class _TasksScreenState extends State<TasksScreen> {
                     children: [
                       Expanded(
                         child: TextField(
-<<<<<<< HEAD
                           controller: startPageController,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
+                            labelText: 'صفحة البداية',
                             border: OutlineInputBorder(),
                           ),
                         ),
@@ -1181,15 +1177,11 @@ class _TasksScreenState extends State<TasksScreen> {
                             labelText: 'صفحة النهاية',
                             border: OutlineInputBorder(),
                           ),
-=======
-                          controller: _fromController,
-                          decoration: const InputDecoration(labelText: 'من (آية/صفحة)', border: OutlineInputBorder()),
                         ),
-<<<<<<< HEAD
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 12),
-=======
-                  const SizedBox(height: 10),
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -1199,18 +1191,12 @@ class _TasksScreenState extends State<TasksScreen> {
                       ),
                       onPressed: _addNewTask,
                       icon: const Icon(Icons.add),
-<<<<<<< HEAD
                       label: const Text('إضافة الورد للقائمة'),
-=======
-                      label: const Text('إضافة الورد'),
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                     ),
                   )
                 ],
               ),
             ),
-<<<<<<< HEAD
-            
             if (allCompleted)
               Container(
                 margin: const EdgeInsets.all(16),
@@ -1218,20 +1204,10 @@ class _TasksScreenState extends State<TasksScreen> {
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
-=======
-            if (allCompleted)
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: primaryColor.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(12),
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                   border: Border.all(color: primaryColor, width: 2),
                 ),
                 child: Column(
                   children: [
-<<<<<<< HEAD
                     const Text(
                       'عاش يا وحش، خلصت مهامك كلها النهارده 💪',
                       textAlign: TextAlign.center,
@@ -1256,27 +1232,11 @@ class _TasksScreenState extends State<TasksScreen> {
                           onPressed: _resetWeeklyScore,
                           child: const Text('تصفير الأسبوع'),
                         ),
-=======
-                    const Text('🎉 مبارك! أتممت جميع مهام اليوم بنجاح 🎉', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 6),
-                    Text('حصلت اليوم على $dailyScore نقطة وتم إضافتها للسكور التراكمي الشامل!', textAlign: TextAlign.center),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        ElevatedButton(onPressed: _resetDailyScore, child: const Text('بدء يوم جديد (تصفير اليوم)')),
-                        const SizedBox(width: 10),
-                        OutlinedButton(onPressed: _resetWeeklyScore, child: const Text('تصفير الأسبوع')),
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                       ],
                     )
                   ],
                 ),
               ),
-<<<<<<< HEAD
-
-=======
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
             _buildCategoryTasks('الورد الجديد', primaryColor),
             _buildCategoryTasks('الماضي القريب', primaryColor),
             _buildCategoryTasks('الماضي البعيد', primaryColor),
@@ -1325,7 +1285,6 @@ class _TasksScreenState extends State<TasksScreen> {
               return Card(
                 elevation: 2,
                 margin: const EdgeInsets.symmetric(vertical: 4),
-<<<<<<< HEAD
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Column(
@@ -1377,25 +1336,6 @@ class _TasksScreenState extends State<TasksScreen> {
                       const SizedBox(height: 6),
                     ],
                   ),
-=======
-                child: CheckboxListTile(
-                  activeColor: primaryColor,
-                  checkColor: widget.isDarkMode ? Colors.black : Colors.white,
-                  title: Text(
-                    'سورة ${task.surahName} (${task.fromRange} - ${task.toRange})',
-                    style: TextStyle(
-                      fontSize: 17,
-                      decoration: task.isCompleted ? TextDecoration.lineThrough : null,
-                    ),
-                  ),
-                  subtitle: Text('التكرار: ${task.repeatCount} | ${task.isCompleted ? "تم الإنجاز (+${100 * task.repeatCount} نقطة)" : "لم تكتمل بعد"}'),
-                  secondary: IconButton(
-                    icon: const Icon(Icons.delete, color: Colors.redAccent),
-                    onPressed: () => _deleteTask(originalIndex),
-                  ),
-                  value: task.isCompleted,
-                  onChanged: (val) => _toggleTask(originalIndex),
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                 ),
               );
             },
@@ -1406,11 +1346,7 @@ class _TasksScreenState extends State<TasksScreen> {
 }
 
 class ThemePopupMenu extends StatelessWidget {
-<<<<<<< HEAD
   final void Function(AppColorTheme) onColorThemeChanged;
-=======
-  final Function(AppColorTheme) onColorThemeChanged;
->>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   final bool isDarkMode;
 
   const ThemePopupMenu({super.key, required this.onColorThemeChanged, required this.isDarkMode});
@@ -1429,8 +1365,6 @@ class ThemePopupMenu extends StatelessWidget {
       ],
     );
   }
-<<<<<<< HEAD
-=======
 }
 
 class SurahDetailScreen extends StatelessWidget {
