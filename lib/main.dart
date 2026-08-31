@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:quran/quran.dart' as quran;
 import 'package:shared_preferences/shared_preferences.dart';
+<<<<<<< HEAD
 import 'package:audioplayers/audioplayers.dart';
 import 'dart:convert';
 import 'dart:async';
@@ -8,10 +9,18 @@ import 'dart:async';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(const WirdyApp());
+=======
+import 'dart:convert';
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const QuranApp());
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
 }
 
 enum AppColorTheme { green, pink, blue, purple }
 
+<<<<<<< HEAD
 class WirdyApp extends StatelessWidget {
   const WirdyApp({super.key});
 
@@ -301,6 +310,16 @@ class MainContainerScreen extends StatefulWidget {
 }
 
 class _MainContainerScreenState extends State<MainContainerScreen> {
+=======
+class QuranApp extends StatefulWidget {
+  const QuranApp({super.key});
+
+  @override
+  State<QuranApp> createState() => _QuranAppState();
+}
+
+class _QuranAppState extends State<QuranApp> {
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   bool isDarkMode = true;
   AppColorTheme currentColorTheme = AppColorTheme.green;
 
@@ -318,16 +337,26 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
   Future<void> _loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
+<<<<<<< HEAD
       isDarkMode = prefs.getBool('isDarkMode_${widget.userName}') ?? true;
       int themeIndex = prefs.getInt('colorTheme_${widget.userName}') ?? 0;
+=======
+      isDarkMode = prefs.getBool('isDarkMode') ?? true;
+      int themeIndex = prefs.getInt('colorTheme') ?? 0;
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
       currentColorTheme = AppColorTheme.values[themeIndex];
     });
   }
 
   Future<void> _saveSettings() async {
     final prefs = await SharedPreferences.getInstance();
+<<<<<<< HEAD
     await prefs.setBool('isDarkMode_${widget.userName}', isDarkMode);
     await prefs.setInt('colorTheme_${widget.userName}', currentColorTheme.index);
+=======
+    await prefs.setBool('isDarkMode', isDarkMode);
+    await prefs.setInt('colorTheme', currentColorTheme.index);
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   }
 
   Color _getPrimaryColor() {
@@ -376,10 +405,18 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
 
   @override
   Widget build(BuildContext context) {
+<<<<<<< HEAD
     return Theme(
       data: _getThemeData(),
       child: MainNavigationScreen(
         userName: widget.userName,
+=======
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: 'تطبيق القرآن والمهام',
+      theme: _getThemeData(),
+      home: MainNavigationScreen(
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
         isDarkMode: isDarkMode,
         currentColorTheme: currentColorTheme,
         onDarkModeChanged: (v) {
@@ -396,7 +433,10 @@ class _MainContainerScreenState extends State<MainContainerScreen> {
 }
 
 class MainNavigationScreen extends StatefulWidget {
+<<<<<<< HEAD
   final String userName;
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   final bool isDarkMode;
   final AppColorTheme currentColorTheme;
   final Function(bool) onDarkModeChanged;
@@ -404,7 +444,10 @@ class MainNavigationScreen extends StatefulWidget {
 
   const MainNavigationScreen({
     super.key,
+<<<<<<< HEAD
     required this.userName,
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
     required this.isDarkMode,
     required this.currentColorTheme,
     required this.onDarkModeChanged,
@@ -417,6 +460,7 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
+<<<<<<< HEAD
   late final PageController _pageController;
 
   @override
@@ -430,21 +474,30 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     _pageController.dispose();
     super.dispose();
   }
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
 
   @override
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     final pages = [
+<<<<<<< HEAD
       QuranPagesListScreen(
         userName: widget.userName,
+=======
+      QuranListScreen(
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
         isDarkMode: widget.isDarkMode,
         currentColorTheme: widget.currentColorTheme,
         onDarkModeChanged: widget.onDarkModeChanged,
         onColorThemeChanged: widget.onColorThemeChanged,
       ),
       TasksScreen(
+<<<<<<< HEAD
         userName: widget.userName,
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
         isDarkMode: widget.isDarkMode,
         currentColorTheme: widget.currentColorTheme,
         onDarkModeChanged: widget.onDarkModeChanged,
@@ -453,6 +506,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     ];
 
     return Scaffold(
+<<<<<<< HEAD
       body: PageView(
         controller: _pageController,
         onPageChanged: (index) {
@@ -462,10 +516,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         },
         children: pages,
       ),
+=======
+      body: pages[_selectedIndex],
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: _selectedIndex,
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
+<<<<<<< HEAD
         onTap: (index) {
           setState(() => _selectedIndex = index);
           _pageController.animateToPage(
@@ -476,6 +534,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'المصحف (السور)'),
+=======
+        onTap: (index) => setState(() => _selectedIndex = index),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'المصحف'),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
           BottomNavigationBarItem(icon: Icon(Icons.task_alt), label: 'المهام والسكور'),
         ],
       ),
@@ -483,16 +546,25 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 }
 
+<<<<<<< HEAD
 class QuranPagesListScreen extends StatefulWidget {
   final String userName;
+=======
+class QuranListScreen extends StatelessWidget {
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   final bool isDarkMode;
   final AppColorTheme currentColorTheme;
   final Function(bool) onDarkModeChanged;
   final Function(AppColorTheme) onColorThemeChanged;
 
+<<<<<<< HEAD
   const QuranPagesListScreen({
     super.key,
     required this.userName,
+=======
+  const QuranListScreen({
+    super.key,
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
     required this.isDarkMode,
     required this.currentColorTheme,
     required this.onDarkModeChanged,
@@ -500,16 +572,20 @@ class QuranPagesListScreen extends StatefulWidget {
   });
 
   @override
+<<<<<<< HEAD
   State<QuranPagesListScreen> createState() => _QuranPagesListScreenState();
 }
 
 class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
   @override
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   Widget build(BuildContext context) {
     final primaryColor = Theme.of(context).colorScheme.primary;
 
     return Scaffold(
       appBar: AppBar(
+<<<<<<< HEAD
         title: Text('وِرْدي - سور القرآن ${widget.userName}', style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
@@ -548,12 +624,57 @@ class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
               ),
               subtitle: Text('الصفحات من $startPage إلى $endPage'),
               trailing: Icon(Icons.arrow_forward_ios, color: primaryColor, size: 16),
+=======
+        title: const Text('القرآن الكريم', style: TextStyle(fontWeight: FontWeight.bold)),
+        actions: [
+          IconButton(
+            icon: Icon(isDarkMode ? Icons.wb_sunny : Icons.nightlight_round),
+            onPressed: () => onDarkModeChanged(!isDarkMode),
+          ),
+          ThemePopupMenu(onColorThemeChanged: onColorThemeChanged, isDarkMode: isDarkMode),
+        ],
+      ),
+      body: ListView.builder(
+        itemCount: quran.totalSurahCount,
+        padding: const EdgeInsets.all(12),
+        itemBuilder: (context, index) {
+          int surahNumber = index + 1;
+          String surahName = quran.getSurahNameArabic(surahNumber);
+          int versesCount = quran.getVerseCount(surahNumber);
+          String place = quran.getPlaceOfRevelation(surahNumber) == 'Makkah' ? 'مكية' : 'مدنية';
+
+          return Card(
+            elevation: 3,
+            margin: const EdgeInsets.symmetric(vertical: 6),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: primaryColor.withOpacity(0.15),
+                foregroundColor: primaryColor,
+                child: Text('$surahNumber', style: const TextStyle(fontWeight: FontWeight.bold)),
+              ),
+              title: Text(
+                surahName,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? primaryColor : Colors.black87,
+                ),
+              ),
+              subtitle: Text('سورة $place | $versesCount آية'),
+              trailing: Icon(Icons.arrow_forward_ios, color: primaryColor, size: 18),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
+<<<<<<< HEAD
                     builder: (context) => MushafHorizontalViewer(
                       initialPage: startPage,
+=======
+                    builder: (context) => SurahDetailScreen(
+                      surahNumber: surahNumber,
+                      surahName: surahName,
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                     ),
                   ),
                 );
@@ -566,6 +687,7 @@ class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
   }
 }
 
+<<<<<<< HEAD
 // عارض صفحات المصحف: آيات متتالية كنص واحد، تفعيل التحديد بالماوس واللمس، وصوت مستقر
 class MushafHorizontalViewer extends StatefulWidget {
   final int initialPage;
@@ -836,6 +958,8 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
   }
 }
 
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
 class QuranTask {
   final String surahName;
   final String category;
@@ -873,7 +997,10 @@ class QuranTask {
 }
 
 class TasksScreen extends StatefulWidget {
+<<<<<<< HEAD
   final String userName;
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   final bool isDarkMode;
   final AppColorTheme currentColorTheme;
   final Function(bool) onDarkModeChanged;
@@ -881,7 +1008,10 @@ class TasksScreen extends StatefulWidget {
 
   const TasksScreen({
     super.key,
+<<<<<<< HEAD
     required this.userName,
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
     required this.isDarkMode,
     required this.currentColorTheme,
     required this.onDarkModeChanged,
@@ -899,15 +1029,22 @@ class _TasksScreenState extends State<TasksScreen> {
 
   String selectedCategory = 'الورد الجديد';
   String selectedSurah = quran.getSurahNameArabic(1);
+<<<<<<< HEAD
   
   final TextEditingController startPageController = TextEditingController(text: '1');
   final TextEditingController endPageController = TextEditingController(text: '1');
+=======
+  final TextEditingController _fromController = TextEditingController(text: '1');
+  final TextEditingController _toController = TextEditingController(text: '10');
+  final TextEditingController _repeatController = TextEditingController(text: '1');
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
 
   List<QuranTask> tasks = [];
 
   @override
   void initState() {
     super.initState();
+<<<<<<< HEAD
     _updateSurahDefaultPages(1);
     _loadData();
   }
@@ -945,13 +1082,34 @@ class _TasksScreenState extends State<TasksScreen> {
       if (tasksJson != null) {
         List<dynamic> decoded = jsonDecode(tasksJson);
         tasks = decoded.map((item) => QuranTask.fromJson(item as Map<String, dynamic>)).toList();
+=======
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      dailyScore = prefs.getInt('dailyScore') ?? 0;
+      weeklyScore = prefs.getInt('weeklyScore') ?? 0;
+      totalScore = prefs.getInt('totalScore') ?? 0;
+
+      String? tasksJson = prefs.getString('savedTasks');
+      if (tasksJson != null) {
+        List decoded = jsonDecode(tasksJson);
+        tasks = decoded.map((item) => QuranTask.fromJson(item)).toList();
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
       } else {
         tasks = [
           QuranTask(
             surahName: 'البقرة',
             category: 'الورد الجديد',
+<<<<<<< HEAD
             fromRange: '2',
             toRange: '5',
+=======
+            fromRange: '1',
+            toRange: '25',
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
             repeatCount: 1,
           ),
         ];
@@ -961,12 +1119,21 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Future<void> _saveData() async {
     final prefs = await SharedPreferences.getInstance();
+<<<<<<< HEAD
     await prefs.setInt('dailyScore_${widget.userName}', dailyScore);
     await prefs.setInt('weeklyScore_${widget.userName}', weeklyScore);
     await prefs.setInt('totalScore_${widget.userName}', totalScore);
 
     String tasksJson = jsonEncode(tasks.map((t) => t.toJson()).toList());
     await prefs.setString('savedTasks_${widget.userName}', tasksJson);
+=======
+    await prefs.setInt('dailyScore', dailyScore);
+    await prefs.setInt('weeklyScore', weeklyScore);
+    await prefs.setInt('totalScore', totalScore);
+
+    String tasksJson = jsonEncode(tasks.map((t) => t.toJson()).toList());
+    await prefs.setString('savedTasks', tasksJson);
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   }
 
   void _toggleTask(int index) {
@@ -988,13 +1155,24 @@ class _TasksScreenState extends State<TasksScreen> {
   }
 
   void _addNewTask() {
+<<<<<<< HEAD
+=======
+    int repeat = int.tryParse(_repeatController.text.trim()) ?? 1;
+
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
     setState(() {
       tasks.add(QuranTask(
         surahName: selectedSurah,
         category: selectedCategory,
+<<<<<<< HEAD
         fromRange: startPageController.text.trim(),
         toRange: endPageController.text.trim(),
         repeatCount: 1,
+=======
+        fromRange: _fromController.text.trim().isEmpty ? '1' : _fromController.text.trim(),
+        toRange: _toController.text.trim().isEmpty ? '1' : _toController.text.trim(),
+        repeatCount: repeat,
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
       ));
     });
     _saveData();
@@ -1061,7 +1239,11 @@ class _TasksScreenState extends State<TasksScreen> {
 
     return Scaffold(
       appBar: AppBar(
+<<<<<<< HEAD
         title: Text('وِرْدي - مهام السكور لـ ${widget.userName}', style: const TextStyle(fontWeight: FontWeight.bold)),
+=======
+        title: const Text('المهام والسكور', style: TextStyle(fontWeight: FontWeight.bold)),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
         actions: [
           IconButton(
             icon: Icon(widget.isDarkMode ? Icons.wb_sunny : Icons.nightlight_round),
@@ -1079,7 +1261,11 @@ class _TasksScreenState extends State<TasksScreen> {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
+<<<<<<< HEAD
                 border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+=======
+                border: Border.all(color: primaryColor.withOpacity(0.5)),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
               ),
               child: Column(
                 children: [
@@ -1097,7 +1283,11 @@ class _TasksScreenState extends State<TasksScreen> {
                       const Icon(Icons.stars, color: Colors.amber, size: 28),
                       const SizedBox(width: 8),
                       Text(
+<<<<<<< HEAD
                         'السكور الشامل: $totalScore نقطة 👑',
+=======
+                        'السكور التراكمي الشامل: $totalScore نقطة 👑',
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                         style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
                       ),
                     ],
@@ -1117,18 +1307,30 @@ class _TasksScreenState extends State<TasksScreen> {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
+<<<<<<< HEAD
                 border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+=======
+                border: Border.all(color: primaryColor.withOpacity(0.3)),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+<<<<<<< HEAD
                   const Text('إضافة ورد / مهمة جديدة:', style: TextStyle(fontWeight: FontWeight.bold)),
+=======
+                  const Text('تحديد ورد / مهمة جديدة:', style: TextStyle(fontWeight: FontWeight.bold)),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       Expanded(
                         child: DropdownButtonFormField<String>(
+<<<<<<< HEAD
                           initialValue: selectedCategory,
+=======
+                          value: selectedCategory,
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                           decoration: const InputDecoration(labelText: 'القسم', border: OutlineInputBorder()),
                           items: const [
                             DropdownMenuItem(value: 'الورد الجديد', child: Text('الورد الجديد')),
@@ -1143,6 +1345,7 @@ class _TasksScreenState extends State<TasksScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonFormField<String>(
+<<<<<<< HEAD
                           initialValue: selectedSurah,
                           decoration: const InputDecoration(labelText: 'السورة', border: OutlineInputBorder()),
                           items: surahList.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
@@ -1154,16 +1357,28 @@ class _TasksScreenState extends State<TasksScreen> {
                                 _updateSurahDefaultPages(sIndex);
                               });
                             }
+=======
+                          value: selectedSurah,
+                          decoration: const InputDecoration(labelText: 'السورة', border: OutlineInputBorder()),
+                          items: surahList.map((s) => DropdownMenuItem(value: s, child: Text(s))).toList(),
+                          onChanged: (val) {
+                            if (val != null) setState(() => selectedSurah = val);
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                           },
                         ),
                       ),
                     ],
                   ),
+<<<<<<< HEAD
                   const SizedBox(height: 12),
+=======
+                  const SizedBox(height: 8),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                   Row(
                     children: [
                       Expanded(
                         child: TextField(
+<<<<<<< HEAD
                           controller: startPageController,
                           keyboardType: TextInputType.number,
                           decoration: const InputDecoration(
@@ -1181,11 +1396,34 @@ class _TasksScreenState extends State<TasksScreen> {
                             labelText: 'صفحة النهاية',
                             border: OutlineInputBorder(),
                           ),
+=======
+                          controller: _fromController,
+                          decoration: const InputDecoration(labelText: 'من (آية/صفحة)', border: OutlineInputBorder()),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _toController,
+                          decoration: const InputDecoration(labelText: 'إلى (آية/صفحة)', border: OutlineInputBorder()),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextField(
+                          controller: _repeatController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(labelText: 'التكرار', border: OutlineInputBorder()),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                         ),
                       ),
                     ],
                   ),
+<<<<<<< HEAD
                   const SizedBox(height: 12),
+=======
+                  const SizedBox(height: 10),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
@@ -1195,12 +1433,17 @@ class _TasksScreenState extends State<TasksScreen> {
                       ),
                       onPressed: _addNewTask,
                       icon: const Icon(Icons.add),
+<<<<<<< HEAD
                       label: const Text('إضافة الورد للقائمة'),
+=======
+                      label: const Text('إضافة الورد'),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                     ),
                   )
                 ],
               ),
             ),
+<<<<<<< HEAD
             
             if (allCompleted)
               Container(
@@ -1209,10 +1452,20 @@ class _TasksScreenState extends State<TasksScreen> {
                 decoration: BoxDecoration(
                   color: primaryColor.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(16),
+=======
+            if (allCompleted)
+              Container(
+                margin: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: primaryColor.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(12),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                   border: Border.all(color: primaryColor, width: 2),
                 ),
                 child: Column(
                   children: [
+<<<<<<< HEAD
                     const Text(
                       'عاش يا وحش، خلصت مهامك كلها النهارده 💪',
                       textAlign: TextAlign.center,
@@ -1237,12 +1490,27 @@ class _TasksScreenState extends State<TasksScreen> {
                           onPressed: _resetWeeklyScore,
                           child: const Text('تصفير الأسبوع'),
                         ),
+=======
+                    const Text('🎉 مبارك! أتممت جميع مهام اليوم بنجاح 🎉', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 6),
+                    Text('حصلت اليوم على $dailyScore نقطة وتم إضافتها للسكور التراكمي الشامل!', textAlign: TextAlign.center),
+                    const SizedBox(height: 10),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        ElevatedButton(onPressed: _resetDailyScore, child: const Text('بدء يوم جديد (تصفير اليوم)')),
+                        const SizedBox(width: 10),
+                        OutlinedButton(onPressed: _resetWeeklyScore, child: const Text('تصفير الأسبوع')),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                       ],
                     )
                   ],
                 ),
               ),
+<<<<<<< HEAD
 
+=======
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
             _buildCategoryTasks('الورد الجديد', primaryColor),
             _buildCategoryTasks('الماضي القريب', primaryColor),
             _buildCategoryTasks('الماضي البعيد', primaryColor),
@@ -1291,6 +1559,7 @@ class _TasksScreenState extends State<TasksScreen> {
               return Card(
                 elevation: 2,
                 margin: const EdgeInsets.symmetric(vertical: 4),
+<<<<<<< HEAD
                 child: Padding(
                   padding: const EdgeInsets.symmetric(vertical: 4),
                   child: Column(
@@ -1342,6 +1611,25 @@ class _TasksScreenState extends State<TasksScreen> {
                       const SizedBox(height: 6),
                     ],
                   ),
+=======
+                child: CheckboxListTile(
+                  activeColor: primaryColor,
+                  checkColor: widget.isDarkMode ? Colors.black : Colors.white,
+                  title: Text(
+                    'سورة ${task.surahName} (${task.fromRange} - ${task.toRange})',
+                    style: TextStyle(
+                      fontSize: 17,
+                      decoration: task.isCompleted ? TextDecoration.lineThrough : null,
+                    ),
+                  ),
+                  subtitle: Text('التكرار: ${task.repeatCount} | ${task.isCompleted ? "تم الإنجاز (+${100 * task.repeatCount} نقطة)" : "لم تكتمل بعد"}'),
+                  secondary: IconButton(
+                    icon: const Icon(Icons.delete, color: Colors.redAccent),
+                    onPressed: () => _deleteTask(originalIndex),
+                  ),
+                  value: task.isCompleted,
+                  onChanged: (val) => _toggleTask(originalIndex),
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
                 ),
               );
             },
@@ -1352,7 +1640,11 @@ class _TasksScreenState extends State<TasksScreen> {
 }
 
 class ThemePopupMenu extends StatelessWidget {
+<<<<<<< HEAD
   final void Function(AppColorTheme) onColorThemeChanged;
+=======
+  final Function(AppColorTheme) onColorThemeChanged;
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
   final bool isDarkMode;
 
   const ThemePopupMenu({super.key, required this.onColorThemeChanged, required this.isDarkMode});
@@ -1371,4 +1663,41 @@ class ThemePopupMenu extends StatelessWidget {
       ],
     );
   }
+<<<<<<< HEAD
+=======
+}
+
+class SurahDetailScreen extends StatelessWidget {
+  final int surahNumber;
+  final String surahName;
+
+  const SurahDetailScreen({
+    super.key,
+    required this.surahNumber,
+    required this.surahName,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    int totalVerses = quran.getVerseCount(surahNumber);
+    return Scaffold(
+      appBar: AppBar(title: Text(surahName)),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: totalVerses,
+        itemBuilder: (context, index) {
+          String verseText = quran.getVerse(surahNumber, index + 1, verseEndSymbol: true);
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8.0),
+            child: Text(
+              verseText,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 22, height: 2.0),
+            ),
+          );
+        },
+      ),
+    );
+  }
+>>>>>>> 9dc7ff7e6cb7fa45d3c21e35a2c259ab21891d03
 }
