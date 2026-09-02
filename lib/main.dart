@@ -932,31 +932,63 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    setState(() {
-      dailyScore = prefs.getInt('dailyScore_${widget.userName}') ?? 0;
-      weeklyScore = prefs.getInt('weeklyScore_${widget.userName}') ?? 0;
-      totalScore = prefs.getInt('totalScore_${widget.userName}') ?? 0;
+    
+    // التحقق التلقائي من التاريخ لمنتصف الليل والأسبوع
+    String todayStr = DateTime.now().toIso8601String().substring(0, 10); // YYYY-MM-DD
+    String? lastSavedDate = prefs.getString('last_saved_date_${widget.userName}');
 
-      String? tasksJson = prefs.getString('savedTasks_${widget.userName}');
-      if (tasksJson != null) {
-        List<dynamic> decoded = jsonDecode(tasksJson);
-        tasks = decoded.map((item) => QuranTask.fromJson(item as Map<String, dynamic>)).toList();
-      } else {
-        tasks = [
-          QuranTask(
-            surahName: 'البقرة',
-            category: 'الورد الجديد',
-            fromRange: '2',
-            toRange: '5',
-            repeatCount: 1,
-          ),
-        ];
+    int loadedDailyScore = prefs.getInt('dailyScore_${widget.userName}') ?? 0;
+    int loadedWeeklyScore = prefs.getInt('weeklyScore_${widget.userName}') ?? 0;
+    int loadedTotalScore = prefs.getInt('totalScore_${widget.userName}') ?? 0;
+
+    String? tasksJson = prefs.getString('savedTasks_${widget.userName}');
+    if (tasksJson != null) {
+      List<dynamic> decoded = jsonDecode(tasksJson);
+      tasks = decoded.map((item) => QuranTask.fromJson(item as Map<String, dynamic>)).toList();
+    } else {
+      tasks = [
+        QuranTask(
+          surahName: 'البقرة',
+          category: 'الورد الجديد',
+          fromRange: '2',
+          toRange: '5',
+          repeatCount: 1,
+        ),
+      ];
+    }
+
+    if (lastSavedDate != null) {
+      DateTime lastDate = DateTime.parse(lastSavedDate);
+      DateTime currentDate = DateTime.now();
+
+      // إذا اختلف اليوم (دخلنا في اليوم الجديد بعد 12 بالليل)
+      if (currentDate.year != lastDate.year || currentDate.month != lastDate.month || currentDate.day != lastDate.day) {
+        loadedDailyScore = 0; // تصفير السكور اليومي تلقائياً
+        for (var t in tasks) {
+          t.isCompleted = false; // إعادة ضبط المهام لتصبح غير منجزة لليوم الجديد
+        }
       }
+
+      // إذا مر أكثر من 7 أيام (تصفير السكور الأسبوعي تلقائياً)
+      if (currentDate.difference(lastDate).inDays >= 7) {
+        loadedWeeklyScore = 0;
+      }
+    }
+
+    setState(() {
+      dailyScore = loadedDailyScore;
+      weeklyScore = loadedWeeklyScore;
+      totalScore = loadedTotalScore;
     });
+
+    _saveData();
   }
 
   Future<void> _saveData() async {
     final prefs = await SharedPreferences.getInstance();
+    String todayStr = DateTime.now().toIso8601String().substring(0, 10);
+    
+    await prefs.setString('last_saved_date_${widget.userName}', todayStr);
     await prefs.setInt('dailyScore_${widget.userName}', dailyScore);
     await prefs.setInt('weeklyScore_${widget.userName}', weeklyScore);
     await prefs.setInt('totalScore_${widget.userName}', totalScore);

@@ -26,7 +26,6 @@ flutter_launcher_icons:
   ios: true
   image_path: "icon.png"
   min_sdk_android: 21
-  # هنا بنحط اسم التطبيق اللي هيظهر تحت الأيقونة للموبايل
   name: "وِرْدي"
 
 flutter:
