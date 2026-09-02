@@ -933,8 +933,7 @@ class _TasksScreenState extends State<TasksScreen> {
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
     
-    // التحقق التلقائي من التاريخ لمنتصف الليل والأسبوع
-    String todayStr = DateTime.now().toIso8601String().substring(0, 10); // YYYY-MM-DD
+    // تم التخلص من متغير todayStr الغير مستخدم لضمان نظافة الكود وعدم وجود تحذيرات
     String? lastSavedDate = prefs.getString('last_saved_date_${widget.userName}');
 
     int loadedDailyScore = prefs.getInt('dailyScore_${widget.userName}') ?? 0;
@@ -961,15 +960,13 @@ class _TasksScreenState extends State<TasksScreen> {
       DateTime lastDate = DateTime.parse(lastSavedDate);
       DateTime currentDate = DateTime.now();
 
-      // إذا اختلف اليوم (دخلنا في اليوم الجديد بعد 12 بالليل)
       if (currentDate.year != lastDate.year || currentDate.month != lastDate.month || currentDate.day != lastDate.day) {
-        loadedDailyScore = 0; // تصفير السكور اليومي تلقائياً
+        loadedDailyScore = 0;
         for (var t in tasks) {
-          t.isCompleted = false; // إعادة ضبط المهام لتصبح غير منجزة لليوم الجديد
+          t.isCompleted = false;
         }
       }
 
-      // إذا مر أكثر من 7 أيام (تصفير السكور الأسبوعي تلقائياً)
       if (currentDate.difference(lastDate).inDays >= 7) {
         loadedWeeklyScore = 0;
       }
