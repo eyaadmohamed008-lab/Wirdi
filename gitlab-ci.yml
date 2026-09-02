@@ -1,0 +1,15 @@
+image: ghcr.io/cirruslabs/flutter:3.27.3
+
+stages:
+  - build
+
+build_apk:
+  stage: build
+  script:
+    - flutter pub get
+    - flutter build apk --release
+  artifacts:
+    name: "wirdy-release-apk"
+    paths:
+      - build/app/outputs/flutter-apk/app-release.apk
+    expire_in: 30 days
