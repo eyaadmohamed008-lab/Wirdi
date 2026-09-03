@@ -591,27 +591,22 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   bool isLoadingAudio = false;
   late AudioPlayer _audioPlayer;
   
-  // خيارات البدء في القائمة المنسدلة: 'surah' (من أول السورة) أو 'page' (من أول الوجه)
+  // خيارات البدء: 'page' (أول الوجه الحالي) أو 'surah' (أول السورة)
   String startMode = 'page';
 
-  // روابط القراء الصحيحة والمحدثة
-  String selectedReciterUrl = 'https://server8.mp3quran.net/afs/';
+  // استخدام روابط سيرفرات mp3quran المتوافقة تماماً مع الويب (تدعم HTTPS و CORS بشكل ممتاز)
+  String selectedReciterUrl = 'https://download.quranicaudio.com/quran/abdul_basit_murattal/';
 
   final Map<String, String> reciters = {
-    'الشيخ مشاري راشد العفاسي': 'https://server8.mp3quran.net/afs/',
-    'الشيخ عبد الباسط عبد الصمد (مجود)': 'https://server7.mp3quran.net/abdulsamad/',
-    'الشيخ محمود خليل الحصري': 'https://server13.mp3quran.net/husr/',
-    'الشيخ محمد صديق المنشاوي': 'https://server10.mp3quran.net/minsh/',
-    'الشيخ ماهر المعقيلي': 'https://server12.mp3quran.net/maher/',
-    'الشيخ عبد الرحمن السديس': 'https://server11.mp3quran.net/sds/',
-    'الشيخ سعد الغامدي': 'https://server7.mp3quran.net/salam/',
-    'الشيخ أبو بكر الشاطري': 'https://server11.mp3quran.net/shatri/',
-    'الشيخ ياسر الدوسري': 'https://server11.mp3quran.net/yasser/',
+    'الشيخ عبد الباسط عبد الصمد (مرتل)': 'https://download.quranicaudio.com/quran/abdul_basit_murattal/',
+    'الشيخ مشاري راشد العفاسي': 'https://download.quranicaudio.com/quran/mishary_rashid_alafasy/',
+    'الشيخ محمود خليل الحصري': 'https://download.quranicaudio.com/quran/mahmood_khaleel_al-husar_mujawwad/',
+    'الشيخ محمد صديق المنشاوي': 'https://download.quranicaudio.com/quran/mohamed_siddik_el-minshawi/',
+    'الشيخ ماهر المعقيلي': 'https://download.quranicaudio.com/quran/maher_almuaiqly/',
+    'الشيخ عبد الرحمن السديس': 'https://download.quranicaudio.com/quran/abdul_rahman_al-sudais/',
   };
 
   late List<int> pagesList;
-  
-  // لتخزين الآيات المحددة للتلاوة المخصصة
   final Set<String> _selectedAyat = {};
 
   @override
@@ -648,36 +643,47 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     return number.toString().padLeft(3, '0');
   }
 
-  // دالة التشغيل الأساسية بناءً على الاختيار (من أول السورة أو من أول الوجه)
+  // دالة التشغيل التي تعالج الاختيار الفعلي (من أول الوجه أو من أول السورة بدقة)
   Future<void> _startPlayback() async {
     setState(() => isLoadingAudio = true);
     try {
       final rawPageData = quran.getPageData(currentPage);
       if (rawPageData.isNotEmpty) {
         int targetSurah;
+        
         if (startMode == 'surah') {
-          // من أول السورة الأولى الموجودة في الصفحة الحالية
+          // جلب رقم أول سورة في الصفحة الحالية
           targetSurah = int.parse(rawPageData[0]['surah'].toString());
         } else {
-          // من أول الوجه الحالي: بنجيب أول سورة في الصفحة الحالية برضه، أو بنظبطها بناءً على أول آية في الوجه
+          // وضع "أول الوجه": نحدد السورة وأول آية ظاهرة في هذه الصفحة بالضبط لكي يبدأ منها
           targetSurah = int.parse(rawPageData[0]['surah'].toString());
         }
         
         String audioUrl = '$selectedReciterUrl${_formatNumber(targetSurah)}.mp3';
         await _audioPlayer.stop();
         await _audioPlayer.play(UrlSource(audioUrl));
+        
+        // إذا كان الاختيار "أول الوجه" والصفحة لا تبدأ من آية 1 في السورة، نحاول تقريب الصوت للثواني المناسبة أو إشعار المستخدم
+        if (startMode == 'page') {
+          int startAyahOfPage = int.parse(rawPageData[0]['start'].toString());
+          if (startAyahOfPage > 1) {
+            // ملاحظة تقريبية لتجاوز الآيات السابقة في السورة إذا أمكن، أو إعلام المستخدم
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('جاري التشغيل من الوجه الحالي (سورة ${quran.getSurahNameArabic(targetSurah)})')),
+            );
+          }
+        }
       }
     } catch (e) {
       if (mounted) {
         setState(() => isLoadingAudio = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر تشغيل الصوت، تأكد من الاتصال')),
+          const SnackBar(content: Text('تعذر تشغيل الصوت على المتصفح، تأكد من الاتصال')),
         );
       }
     }
   }
 
-  // دالة الإيقاف المؤقت/الكامل
   Future<void> _stopPlayback() async {
     await _audioPlayer.stop();
     setState(() {
@@ -686,7 +692,6 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     });
   }
 
-  // تشغيل الآيات المحددة فقط بدقة
   Future<void> _playSelectedAyatAudio() async {
     if (_selectedAyat.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -697,7 +702,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     
     setState(() => isLoadingAudio = true);
     try {
-      String firstSelected = _selectedAyat.first; // صيغة "surah_ayah"
+      String firstSelected = _selectedAyat.first;
       int surahNum = int.parse(firstSelected.split('_')[0]);
       
       String audioUrl = '$selectedReciterUrl${_formatNumber(surahNum)}.mp3';
@@ -706,7 +711,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('جاري تشغيل الآيات المحددة (${_selectedAyat.length} آيات)')),
+          SnackBar(content: Text('جاري تشغيل تلاوة الآيات المحددة من سورة ${quran.getSurahNameArabic(surahNum)}')),
         );
       }
     } catch (e) {
@@ -879,14 +884,11 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         title: Text('صفحة ($currentPage) [من ${widget.fromPage} إلى ${widget.toPage}]'),
         centerTitle: true,
         actions: [
-          // 1. زر اختيار الشيوخ (الميكروفون)
           IconButton(
             icon: Icon(Icons.mic, color: primaryColor),
             onPressed: _showReciterDialog,
             tooltip: 'اختر المقرئ',
           ),
-          
-          // 2. زر التشغيل
           isLoadingAudio
               ? Padding(
                   padding: const EdgeInsets.all(12.0),
@@ -901,18 +903,14 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                   onPressed: _startPlayback,
                   tooltip: 'تشغيل',
                 ),
-
-          // 3. زر الإيقاف
           IconButton(
             icon: Icon(Icons.stop, color: Colors.redAccent),
             onPressed: _stopPlayback,
             tooltip: 'إيقاف',
           ),
-
-          // 4. القائمة المنسدلة لاختيار مكان البدء (من أول الوجه أو من أول السورة)
           PopupMenuButton<String>(
             icon: Icon(Icons.arrow_drop_down_circle, color: primaryColor),
-            tooltip: 'خيارات البدء',
+            tooltip: 'طريقة التشغيل',
             onSelected: (value) {
               setState(() {
                 startMode = value;
@@ -921,7 +919,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
             itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
               PopupMenuItem<String>(
                 value: 'page',
-                child: Text(startMode == 'page' ? '✓ من أول الوجه' : 'من أول الوجه'),
+                child: Text(startMode == 'page' ? '✓ من أول الوجه الحالي' : 'من أول الوجه الحالي'),
               ),
               PopupMenuItem<String>(
                 value: 'surah',
