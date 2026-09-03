@@ -1,4 +1,4 @@
-package com.example.quran_app_clean
+package com.example.wirdy
 
 import io.flutter.embedding.android.FlutterActivity
 

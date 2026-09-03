@@ -1,4 +1,4 @@
-name: quran_app_clean
+name: wirdy
 description: "A new Flutter project."
 publish_to: 'none'
 version: 1.0.0+1
@@ -30,4 +30,3 @@ flutter_launcher_icons:
 
 flutter:
   uses-material-design: true
-  
