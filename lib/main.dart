@@ -568,7 +568,6 @@ class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
   }
 }
 
-// عارض صفحات المصحف المقيد بنطاق محدد للورد مع أزرار تشغيل الصوت والتنقل
 class MushafRestrictedViewer extends StatefulWidget {
   final int fromPage;
   final int toPage;
@@ -689,89 +688,104 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   }
 
   Widget _buildPageContent(int pageNum, Color primaryColor) {
-    List<InlineSpan> spans = [];
-
+    List<Widget> pageElements = [];
+    
     try {
-      for (int surah = 1; surah <= 114; surah++) {
-        int startPage = quran.getPageNumber(surah, 1);
-        
-        if (startPage == pageNum) {
+      // تعديل هنا لجلب البيانات وتحويلها بشكل آمن يوافق الإصدار الحديث
+      final rawPageData = quran.getPageData(pageNum);
+      List<Map<String, int>> versesOnPage = rawPageData.map((verse) {
+        return {
+          'surah': int.parse(verse['surah'].toString()),
+          'start': int.parse(verse['start'].toString()),
+          'end': int.parse(verse['end'].toString()),
+        };
+      }).toList();
+
+      int currentSurah = -1;
+
+      for (var verse in versesOnPage) {
+        int surah = verse['surah']!;
+        int ayah = verse['start']!;
+
+        if (surah != currentSurah) {
+          currentSurah = surah;
           String surahName = quran.getSurahNameArabic(surah);
-          spans.add(
-            WidgetSpan(
-              alignment: PlaceholderAlignment.middle,
-              child: Container(
-                width: double.infinity,
-                margin: const EdgeInsets.symmetric(vertical: 14),
-                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-                decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: primaryColor, width: 1.5),
-                ),
-                child: Center(
-                  child: Text(
-                    '✨ سورة $surahName ✨',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
-                  ),
+          
+          pageElements.add(
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.symmetric(vertical: 12),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+              decoration: BoxDecoration(
+                color: primaryColor.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: primaryColor, width: 1.5),
+              ),
+              child: Center(
+                child: Text(
+                  '✨ سورة $surahName ✨',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: primaryColor),
                 ),
               ),
             ),
           );
 
-          // إظهار البسملة فقط إذا لم تكن سورة التوبة (9) ولم تكن سورة الفاتحة (1) لأن مكتبة القرآن تعرض البسملة تلقائياً في آيات الفاتحة الأولى
-          if (surah != 9 && surah != 1) {
-            spans.add(
-              const WidgetSpan(
-                alignment: PlaceholderAlignment.middle,
-                child: Padding(
-                  padding: EdgeInsets.only(bottom: 10.0),
-                  child: Center(
-                    child: Text(
-                      'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
-                      style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold),
-                    ),
+          if (surah != 9 && surah != 1 && ayah == 1) {
+            pageElements.add(
+              const Padding(
+                padding: EdgeInsets.only(bottom: 10.0),
+                child: Center(
+                  child: Text(
+                    'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ',
+                    style: TextStyle(fontSize: 16, color: Colors.grey, fontWeight: FontWeight.bold),
                   ),
-                ),
-              ),
-            );
-          }
-        }
-
-        int versesCount = quran.getVerseCount(surah);
-        for (int ayah = 1; ayah <= versesCount; ayah++) {
-          if (quran.getPageNumber(surah, ayah) == pageNum) {
-            String ayahText = quran.getVerse(surah, ayah);
-            
-            // معالجة إضافية لضمان عدم تكرار نص البسملة الداخلي لو وُجد ضمن آيات سورة الفاتحة الأولى
-            if (surah == 1 && ayah == 1) {
-              // تخطي النص الصريح للبسملة إذا جاء كآية مكررة طالما تم التعامل معها أو عرضها برسم المصحف السليم
-            }
-
-            spans.add(
-              TextSpan(
-                text: '$ayahText ﴿$ayah﴾ ',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontFamily: 'Amiri',
-                  height: 2.2,
-                  color: Colors.white,
                 ),
               ),
             );
           }
         }
       }
-    } catch (_) {}
 
-    if (spans.isEmpty) {
-      spans.add(const TextSpan(text: 'صفحة فارغة', style: TextStyle(color: Colors.white)));
+      String fullPageText = "";
+      for (var verseData in versesOnPage) {
+        int surah = verseData['surah']!;
+        int startAyah = verseData['start']!;
+        int endAyah = verseData['end']!;
+
+        for (int i = startAyah; i <= endAyah; i++) {
+          String ayahText = quran.getVerse(surah, i);
+          fullPageText += '$ayahText ﴿$i﴾ ';
+        }
+      }
+
+      pageElements.add(
+        GestureDetector(
+          onTap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('تم النقر على الآيات، يمكنك استخدام زر التشغيل بالأعلى للاستماع'), duration: Duration(milliseconds: 800)),
+            );
+          },
+          child: Text(
+            fullPageText,
+            textDirection: TextDirection.rtl,
+            textAlign: TextAlign.justify,
+            style: const TextStyle(
+              fontSize: 22,
+              fontFamily: 'Amiri',
+              height: 2.2,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      );
+
+    } catch (e) {
+      pageElements.add(const Text('عذراً، حدث خطأ في تحميل هذه الصفحة', style: TextStyle(color: Colors.white)));
     }
 
-    return SelectableText.rich(
-      TextSpan(children: spans),
-      textDirection: TextDirection.rtl,
-      textAlign: TextAlign.justify,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: pageElements,
     );
   }
 
