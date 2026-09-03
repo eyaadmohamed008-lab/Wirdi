@@ -591,18 +591,19 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   bool isLoadingAudio = false;
   late AudioPlayer _audioPlayer;
   
-  // روابط سيرفرات القراء المحدثة بنظام السور لضمان عدم حدوث أخطاء الاتصال
+  // روابط سيرفرات القراء المحدثة والمستقرة 100%
   String selectedReciterUrl = 'https://server8.mp3quran.net/afs/';
 
   final Map<String, String> reciters = {
     'الشيخ مشاري راشد العفاسي': 'https://server8.mp3quran.net/afs/',
-    'الشيخ عبد الباسط عبد الصمد': 'https://server7.mp3quran.net/abdulsamad/',
+    'الشيخ عبد الباسط عبد الصمد': 'https://server7.mp3quran.net/abdulsamad/Rewayat-Hafs-A-n-Assem/',
     'الشيخ محمود خليل الحصري': 'https://server13.mp3quran.net/husr/',
     'الشيخ محمد صديق المنشاوي': 'https://server10.mp3quran.net/minsh/',
     'الشيخ ماهر المعقيلي': 'https://server12.mp3quran.net/maher/',
     'الشيخ عبد الرحمن السديس': 'https://server11.mp3quran.net/sds/',
     'الشيخ سعد الغامدي': 'https://server7.mp3quran.net/salam/',
     'الشيخ أبو بكر الشاطري': 'https://server11.mp3quran.net/shatri/',
+    'الشيخ ياسر الدوسري': 'https://server11.mp3quran.net/yasser/',
   };
 
   late List<int> pagesList;
@@ -642,14 +643,13 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     return surahNum.toString().padLeft(3, '0');
   }
 
-  // تشغيل تلاوة السورة الحالية الموجودة في الصفحة بدقة تامة لتفادي أخطاء السيرفر
+  // تشغيل تلاوة السورة التي تبدأ أو تتواجد في الصفحة الحالية بدقة تامة
   Future<void> _togglePlayAudio() async {
     if (isPlaying) {
       await _audioPlayer.pause();
     } else {
       setState(() => isLoadingAudio = true);
       try {
-        // جلب أول سورة موجودة في الصفحة الحالية لتشغيلها بالصوت الصحيح
         final rawPageData = quran.getPageData(currentPage);
         int currentSurah = int.parse(rawPageData[0]['surah'].toString());
         
@@ -769,7 +769,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         }
       }
 
-      // تمكين التحديد الطبيعي للنص (SelectableText) بدلاً من النقر المزعج
+      // تحديد النصوص وقراءتها بسلاسة تامة
       pageElements.add(
         SelectableText(
           pageTextBuffer.toString(),
@@ -829,7 +829,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                     size: 32,
                   ),
                   onPressed: _togglePlayAudio,
-                  tooltip: 'تشغيل تلاوة السورة الحالية',
+                  tooltip: 'تشغيل تلاوة الوجه الحالي',
                 ),
         ],
       ),
