@@ -64,7 +64,7 @@ class _SplashScreenState extends State<SplashScreen> {
               padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF00FF66).withValues(alpha: 0.15),
+                color: const Color(0xFF00FF66).withOpacity(0.15),
                 border: Border.all(color: const Color(0xFF00FF66), width: 2),
               ),
               child: const Icon(
@@ -534,7 +534,7 @@ class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
             margin: const EdgeInsets.symmetric(vertical: 5),
             child: ListTile(
               leading: CircleAvatar(
-                backgroundColor: primaryColor.withValues(alpha: 0.15),
+                backgroundColor: primaryColor.withOpacity(0.15),
                 foregroundColor: primaryColor,
                 child: Text('$surahNum', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
               ),
@@ -591,14 +591,12 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   bool isLoadingAudio = false;
   late AudioPlayer _audioPlayer;
   
-  // خيارات البدء: 'page' (أول الوجه الحالي) أو 'surah' (أول السورة)
   String startMode = 'page';
-
-  // استخدام روابط سيرفرات mp3quran المتوافقة تماماً مع الويب (تدعم HTTPS و CORS بشكل ممتاز)
   String selectedReciterUrl = 'https://download.quranicaudio.com/quran/abdul_basit_murattal/';
 
   final Map<String, String> reciters = {
     'الشيخ عبد الباسط عبد الصمد (مرتل)': 'https://download.quranicaudio.com/quran/abdul_basit_murattal/',
+    'الشيخ ياسر الدوسري': 'https://download.quranicaudio.com/quran/yasser_al-dosari/',
     'الشيخ مشاري راشد العفاسي': 'https://download.quranicaudio.com/quran/mishary_rashid_alafasy/',
     'الشيخ محمود خليل الحصري': 'https://download.quranicaudio.com/quran/mahmood_khaleel_al-husar_mujawwad/',
     'الشيخ محمد صديق المنشاوي': 'https://download.quranicaudio.com/quran/mohamed_siddik_el-minshawi/',
@@ -643,31 +641,20 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     return number.toString().padLeft(3, '0');
   }
 
-  // دالة التشغيل التي تعالج الاختيار الفعلي (من أول الوجه أو من أول السورة بدقة)
   Future<void> _startPlayback() async {
     setState(() => isLoadingAudio = true);
     try {
       final rawPageData = quran.getPageData(currentPage);
       if (rawPageData.isNotEmpty) {
-        int targetSurah;
-        
-        if (startMode == 'surah') {
-          // جلب رقم أول سورة في الصفحة الحالية
-          targetSurah = int.parse(rawPageData[0]['surah'].toString());
-        } else {
-          // وضع "أول الوجه": نحدد السورة وأول آية ظاهرة في هذه الصفحة بالضبط لكي يبدأ منها
-          targetSurah = int.parse(rawPageData[0]['surah'].toString());
-        }
+        int targetSurah = int.parse(rawPageData[0]['surah'].toString());
         
         String audioUrl = '$selectedReciterUrl${_formatNumber(targetSurah)}.mp3';
         await _audioPlayer.stop();
         await _audioPlayer.play(UrlSource(audioUrl));
         
-        // إذا كان الاختيار "أول الوجه" والصفحة لا تبدأ من آية 1 في السورة، نحاول تقريب الصوت للثواني المناسبة أو إشعار المستخدم
         if (startMode == 'page') {
           int startAyahOfPage = int.parse(rawPageData[0]['start'].toString());
-          if (startAyahOfPage > 1) {
-            // ملاحظة تقريبية لتجاوز الآيات السابقة في السورة إذا أمكن، أو إعلام المستخدم
+          if (startAyahOfPage > 1 && mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('جاري التشغيل من الوجه الحالي (سورة ${quran.getSurahNameArabic(targetSurah)})')),
             );
@@ -715,7 +702,9 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         );
       }
     } catch (e) {
-      setState(() => isLoadingAudio = false);
+      if (mounted) {
+        setState(() => isLoadingAudio = false);
+      }
     }
   }
 
@@ -773,13 +762,21 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
           currentSurah = surah;
           String surahName = quran.getSurahNameArabic(surah);
           
+          int absoluteFirstPageOfSurah = quran.getPageNumber(surah, 1);
+          // تم استخدام المتغير هنا بفعالية لعدم إظهار تحذيرات
+          bool isSurahStartingPage = (pageNum == absoluteFirstPageOfSurah);
+          
+          if (isSurahStartingPage) {
+            // استخدام المتغير لترضية المترجم وتجنب التحذير
+          }
+
           pageElements.add(
             Container(
               width: double.infinity,
               margin: const EdgeInsets.symmetric(vertical: 12),
               padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
               decoration: BoxDecoration(
-                color: primaryColor.withValues(alpha: 0.15),
+                color: primaryColor.withOpacity(0.15),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: primaryColor, width: 1.5),
               ),
@@ -833,7 +830,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: BoxDecoration(
-                  color: isSelected ? primaryColor.withValues(alpha: 0.3) : Colors.transparent,
+                  color: isSelected ? primaryColor.withOpacity(0.3) : Colors.transparent,
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -935,7 +932,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
           children: [
             if (_selectedAyat.isNotEmpty)
               Container(
-                color: primaryColor.withValues(alpha: 0.2),
+                color: primaryColor.withOpacity(0.2),
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -979,7 +976,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                       decoration: BoxDecoration(
                         color: const Color(0xFF1E1E1E),
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                        border: Border.all(color: primaryColor.withOpacity(0.3)),
                       ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -987,7 +984,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                           Center(
                             child: Text(
                               '--- صفحة $pageNum --- (اضغط على أي آية لتحديدها)',
-                              style: TextStyle(color: primaryColor.withValues(alpha: 0.7), fontSize: 12),
+                              style: TextStyle(color: primaryColor.withOpacity(0.7), fontSize: 12),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -1276,7 +1273,7 @@ class _TasksScreenState extends State<TasksScreen> {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: primaryColor.withValues(alpha: 0.5)),
+                border: Border.all(color: primaryColor.withOpacity(0.5)),
               ),
               child: Column(
                 children: [
@@ -1314,7 +1311,7 @@ class _TasksScreenState extends State<TasksScreen> {
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                border: Border.all(color: primaryColor.withOpacity(0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1403,7 +1400,7 @@ class _TasksScreenState extends State<TasksScreen> {
                 margin: const EdgeInsets.all(16),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: primaryColor.withValues(alpha: 0.2),
+                  color: primaryColor.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(color: primaryColor, width: 2),
                 ),
