@@ -591,7 +591,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   bool isLoadingAudio = false;
   late AudioPlayer _audioPlayer;
   
-  // روابط سيرفرات القراء المحدثة والمضبوطة رسمياً لتشتغل بدون إشكاليات
+  // روابط سيرفرات القراء المحدثة بنظام السور لضمان عدم حدوث أخطاء الاتصال
   String selectedReciterUrl = 'https://server8.mp3quran.net/afs/';
 
   final Map<String, String> reciters = {
@@ -638,18 +638,23 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     super.dispose();
   }
 
-  String _formatPageNumber(int pageNum) {
-    return pageNum.toString().padLeft(3, '0');
+  String _formatSurahNumber(int surahNum) {
+    return surahNum.toString().padLeft(3, '0');
   }
 
-  // تشغيل تلاوة الصفحة الحالية التي يقرأها المستخدم الآن بدقة
+  // تشغيل تلاوة السورة الحالية الموجودة في الصفحة بدقة تامة لتفادي أخطاء السيرفر
   Future<void> _togglePlayAudio() async {
     if (isPlaying) {
       await _audioPlayer.pause();
     } else {
       setState(() => isLoadingAudio = true);
-      String audioUrl = '$selectedReciterUrl${_formatPageNumber(currentPage)}.mp3';
       try {
+        // جلب أول سورة موجودة في الصفحة الحالية لتشغيلها بالصوت الصحيح
+        final rawPageData = quran.getPageData(currentPage);
+        int currentSurah = int.parse(rawPageData[0]['surah'].toString());
+        
+        String audioUrl = '$selectedReciterUrl${_formatSurahNumber(currentSurah)}.mp3';
+        
         await _audioPlayer.stop();
         await _audioPlayer.play(UrlSource(audioUrl));
       } catch (e) {
@@ -661,17 +666,6 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         }
       }
     }
-  }
-
-  // تشغيل آية محددة عند النقر عليها
-  Future<void> _playSpecificAyah(int surah, int ayahNum, String ayahText) async {
-    await _audioPlayer.stop();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('تم تحديد الآية ($ayahNum) من سورة ${quran.getSurahNameArabic(surah)}'),
-        duration: const Duration(seconds: 2),
-      ),
-    );
   }
 
   void _showReciterDialog() {
@@ -763,7 +757,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         }
       }
 
-      List<InlineSpan> ayahSpans = [];
+      StringBuffer pageTextBuffer = StringBuffer();
       for (var verseData in versesOnPage) {
         int surah = verseData['surah']!;
         int startAyah = verseData['start']!;
@@ -771,32 +765,22 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
 
         for (int i = startAyah; i <= endAyah; i++) {
           String ayahText = quran.getVerse(surah, i);
-          
-          ayahSpans.add(
-            WidgetSpan(
-              child: GestureDetector(
-                onTap: () => _playSpecificAyah(surah, i, ayahText),
-                child: Text(
-                  '$ayahText ﴿$i﴾ ',
-                  textDirection: TextDirection.rtl,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontFamily: 'Amiri',
-                    height: 2.2,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          );
+          pageTextBuffer.write('$ayahText ﴿$i﴾ ');
         }
       }
 
+      // تمكين التحديد الطبيعي للنص (SelectableText) بدلاً من النقر المزعج
       pageElements.add(
-        RichText(
+        SelectableText(
+          pageTextBuffer.toString(),
           textDirection: TextDirection.rtl,
           textAlign: TextAlign.justify,
-          text: TextSpan(children: ayahSpans),
+          style: const TextStyle(
+            fontSize: 22,
+            fontFamily: 'Amiri',
+            height: 2.2,
+            color: Colors.white,
+          ),
         ),
       );
 
@@ -845,7 +829,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                     size: 32,
                   ),
                   onPressed: _togglePlayAudio,
-                  tooltip: 'تشغيل تلاوة الصفحة الحالية',
+                  tooltip: 'تشغيل تلاوة السورة الحالية',
                 ),
         ],
       ),
