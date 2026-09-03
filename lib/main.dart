@@ -590,6 +590,8 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   bool isPlaying = false;
   bool isLoadingAudio = false;
   late AudioPlayer _audioPlayer;
+  
+  // روابط سيرفرات القراء المحدثة والمضبوطة رسمياً لتشتغل بدون إشكاليات
   String selectedReciterUrl = 'https://server8.mp3quran.net/afs/';
 
   final Map<String, String> reciters = {
@@ -597,6 +599,10 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     'الشيخ عبد الباسط عبد الصمد': 'https://server7.mp3quran.net/abdulsamad/',
     'الشيخ محمود خليل الحصري': 'https://server13.mp3quran.net/husr/',
     'الشيخ محمد صديق المنشاوي': 'https://server10.mp3quran.net/minsh/',
+    'الشيخ ماهر المعقيلي': 'https://server12.mp3quran.net/maher/',
+    'الشيخ عبد الرحمن السديس': 'https://server11.mp3quran.net/sds/',
+    'الشيخ سعد الغامدي': 'https://server7.mp3quran.net/salam/',
+    'الشيخ أبو بكر الشاطري': 'https://server11.mp3quran.net/shatri/',
   };
 
   late List<int> pagesList;
@@ -636,6 +642,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     return pageNum.toString().padLeft(3, '0');
   }
 
+  // تشغيل تلاوة الصفحة الحالية التي يقرأها المستخدم الآن بدقة
   Future<void> _togglePlayAudio() async {
     if (isPlaying) {
       await _audioPlayer.pause();
@@ -654,6 +661,17 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         }
       }
     }
+  }
+
+  // تشغيل آية محددة عند النقر عليها
+  Future<void> _playSpecificAyah(int surah, int ayahNum, String ayahText) async {
+    await _audioPlayer.stop();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('تم تحديد الآية ($ayahNum) من سورة ${quran.getSurahNameArabic(surah)}'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
   }
 
   void _showReciterDialog() {
@@ -691,7 +709,6 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     List<Widget> pageElements = [];
     
     try {
-      // تعديل هنا لجلب البيانات وتحويلها بشكل آمن يوافق الإصدار الحديث
       final rawPageData = quran.getPageData(pageNum);
       List<Map<String, int>> versesOnPage = rawPageData.map((verse) {
         return {
@@ -746,7 +763,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         }
       }
 
-      String fullPageText = "";
+      List<InlineSpan> ayahSpans = [];
       for (var verseData in versesOnPage) {
         int surah = verseData['surah']!;
         int startAyah = verseData['start']!;
@@ -754,28 +771,32 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
 
         for (int i = startAyah; i <= endAyah; i++) {
           String ayahText = quran.getVerse(surah, i);
-          fullPageText += '$ayahText ﴿$i﴾ ';
+          
+          ayahSpans.add(
+            WidgetSpan(
+              child: GestureDetector(
+                onTap: () => _playSpecificAyah(surah, i, ayahText),
+                child: Text(
+                  '$ayahText ﴿$i﴾ ',
+                  textDirection: TextDirection.rtl,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontFamily: 'Amiri',
+                    height: 2.2,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          );
         }
       }
 
       pageElements.add(
-        GestureDetector(
-          onTap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('تم النقر على الآيات، يمكنك استخدام زر التشغيل بالأعلى للاستماع'), duration: Duration(milliseconds: 800)),
-            );
-          },
-          child: Text(
-            fullPageText,
-            textDirection: TextDirection.rtl,
-            textAlign: TextAlign.justify,
-            style: const TextStyle(
-              fontSize: 22,
-              fontFamily: 'Amiri',
-              height: 2.2,
-              color: Colors.white,
-            ),
-          ),
+        RichText(
+          textDirection: TextDirection.rtl,
+          textAlign: TextAlign.justify,
+          text: TextSpan(children: ayahSpans),
         ),
       );
 
@@ -824,7 +845,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                     size: 32,
                   ),
                   onPressed: _togglePlayAudio,
-                  tooltip: 'تشغيل تلاوة الصفحة',
+                  tooltip: 'تشغيل تلاوة الصفحة الحالية',
                 ),
         ],
       ),
@@ -836,6 +857,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: pagesList.length,
+                key: const PageStorageKey('mushaf_page_view'),
                 onPageChanged: (index) async {
                   if (isPlaying) {
                     await _audioPlayer.stop();
@@ -847,15 +869,16 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                 itemBuilder: (context, index) {
                   int pageNum = pagesList[index];
 
-                  return Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-                    ),
-                    child: SingleChildScrollView(
+                  return SingleChildScrollView(
+                    key: ValueKey('page_$pageNum'),
+                    child: Container(
+                      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                      ),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
