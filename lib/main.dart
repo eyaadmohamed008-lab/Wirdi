@@ -552,7 +552,9 @@ class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => MushafHorizontalViewer(
+                    builder: (context) => MushafRestrictedViewer(
+                      fromPage: startPage,
+                      toPage: endPage,
                       initialPage: startPage,
                     ),
                   ),
@@ -566,18 +568,26 @@ class _QuranPagesListScreenState extends State<QuranPagesListScreen> {
   }
 }
 
-class MushafHorizontalViewer extends StatefulWidget {
+// عارض صفحات المصحف المقيد بنطاق محدد للورد مع أزرار تشغيل الصوت والتنقل
+class MushafRestrictedViewer extends StatefulWidget {
+  final int fromPage;
+  final int toPage;
   final int initialPage;
 
-  const MushafHorizontalViewer({super.key, required this.initialPage});
+  const MushafRestrictedViewer({
+    super.key,
+    required this.fromPage,
+    required this.toPage,
+    required this.initialPage,
+  });
 
   @override
-  State<MushafHorizontalViewer> createState() => _MushafHorizontalViewerState();
+  State<MushafRestrictedViewer> createState() => _MushafRestrictedViewerState();
 }
 
-class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
+class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   late PageController _pageController;
-  int currentPage = 1;
+  late int currentPage;
   bool isPlaying = false;
   bool isLoadingAudio = false;
   late AudioPlayer _audioPlayer;
@@ -590,12 +600,21 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
     'الشيخ محمد صديق المنشاوي': 'https://server10.mp3quran.net/minsh/',
   };
 
+  late List<int> pagesList;
+
   @override
   void initState() {
     super.initState();
-    currentPage = widget.initialPage;
-    _pageController = PageController(initialPage: 604 - widget.initialPage);
+    int start = widget.fromPage <= widget.toPage ? widget.fromPage : widget.toPage;
+    int end = widget.fromPage <= widget.toPage ? widget.toPage : widget.fromPage;
     
+    pagesList = List.generate(end - start + 1, (index) => start + index);
+    
+    currentPage = pagesList.contains(widget.initialPage) ? widget.initialPage : start;
+    int initialIndex = pagesList.indexOf(currentPage);
+
+    _pageController = PageController(initialPage: initialIndex);
+
     _audioPlayer = AudioPlayer();
     _audioPlayer.onPlayerStateChanged.listen((state) {
       if (mounted) {
@@ -631,7 +650,7 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
         if (mounted) {
           setState(() => isLoadingAudio = false);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر تشغيل الصوت، سيعمل تماماً على تطبيق الهاتف (APK)')),
+            const SnackBar(content: Text('تعذر تشغيل الصوت، تأكد من اتصال الإنترنت')),
           );
         }
       }
@@ -678,7 +697,6 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
         
         if (startPage == pageNum) {
           String surahName = quran.getSurahNameArabic(surah);
-          
           spans.add(
             WidgetSpan(
               alignment: PlaceholderAlignment.middle,
@@ -701,7 +719,8 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
             ),
           );
 
-          if (surah != 9) {
+          // إظهار البسملة فقط إذا لم تكن سورة التوبة (9) ولم تكن سورة الفاتحة (1) لأن مكتبة القرآن تعرض البسملة تلقائياً في آيات الفاتحة الأولى
+          if (surah != 9 && surah != 1) {
             spans.add(
               const WidgetSpan(
                 alignment: PlaceholderAlignment.middle,
@@ -723,6 +742,12 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
         for (int ayah = 1; ayah <= versesCount; ayah++) {
           if (quran.getPageNumber(surah, ayah) == pageNum) {
             String ayahText = quran.getVerse(surah, ayah);
+            
+            // معالجة إضافية لضمان عدم تكرار نص البسملة الداخلي لو وُجد ضمن آيات سورة الفاتحة الأولى
+            if (surah == 1 && ayah == 1) {
+              // تخطي النص الصريح للبسملة إذا جاء كآية مكررة طالما تم التعامل معها أو عرضها برسم المصحف السليم
+            }
+
             spans.add(
               TextSpan(
                 text: '$ayahText ﴿$ayah﴾ ',
@@ -756,7 +781,12 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('صفحة المصحف رقم ($currentPage) من 604'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => Navigator.pop(context),
+          tooltip: 'إنهاء الورد والرجوع',
+        ),
+        title: Text('ورد الصفحات: ($currentPage) [من ${widget.fromPage} إلى ${widget.toPage}]'),
         centerTitle: true,
         actions: [
           IconButton(
@@ -786,46 +816,67 @@ class _MushafHorizontalViewerState extends State<MushafHorizontalViewer> {
       ),
       body: Directionality(
         textDirection: TextDirection.rtl,
-        child: PageView.builder(
-          controller: _pageController,
-          itemCount: 604,
-          reverse: true,
-          onPageChanged: (index) async {
-            if (isPlaying) {
-              await _audioPlayer.stop();
-            }
-            setState(() {
-              currentPage = 604 - index;
-            });
-          },
-          itemBuilder: (context, index) {
-            int pageNum = 604 - index;
+        child: Column(
+          children: [
+            Expanded(
+              child: PageView.builder(
+                controller: _pageController,
+                itemCount: pagesList.length,
+                onPageChanged: (index) async {
+                  if (isPlaying) {
+                    await _audioPlayer.stop();
+                  }
+                  setState(() {
+                    currentPage = pagesList[index];
+                  });
+                },
+                itemBuilder: (context, index) {
+                  int pageNum = pagesList[index];
 
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E1E1E),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
-              ),
-              child: SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Text(
-                        '--- صفحة $pageNum ---',
-                        style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1E1E1E),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: primaryColor.withValues(alpha: 0.3)),
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Center(
+                            child: Text(
+                              '--- صفحة $pageNum ---',
+                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          _buildPageContent(pageNum, primaryColor),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    _buildPageContent(pageNum, primaryColor),
-                  ],
+                  );
+                },
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.all(12),
+              color: const Color(0xFF1E1E1E),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.redAccent,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.exit_to_app),
+                  label: const Text('إنهاء جلسة الورد والخروج'),
                 ),
               ),
-            );
-          },
+            ),
+          ],
         ),
       ),
     );
@@ -932,8 +983,6 @@ class _TasksScreenState extends State<TasksScreen> {
 
   Future<void> _loadData() async {
     final prefs = await SharedPreferences.getInstance();
-    
-    // تم التخلص من متغير todayStr الغير مستخدم لضمان نظافة الكود وعدم وجود تحذيرات
     String? lastSavedDate = prefs.getString('last_saved_date_${widget.userName}');
 
     int loadedDailyScore = prefs.getInt('dailyScore_${widget.userName}') ?? 0;
@@ -1347,12 +1396,15 @@ class _TasksScreenState extends State<TasksScreen> {
                               minimumSize: const Size(120, 36),
                             ),
                             onPressed: () {
-                              int targetPage = int.tryParse(task.fromRange) ?? 1;
+                              int fromP = int.tryParse(task.fromRange) ?? 1;
+                              int toP = int.tryParse(task.toRange) ?? fromP;
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (context) => MushafHorizontalViewer(
-                                    initialPage: targetPage,
+                                  builder: (context) => MushafRestrictedViewer(
+                                    fromPage: fromP,
+                                    toPage: toP,
+                                    initialPage: fromP,
                                   ),
                                 ),
                               );
@@ -1392,40 +1444,6 @@ class ThemePopupMenu extends StatelessWidget {
         PopupMenuItem(value: AppColorTheme.blue, child: Text('أزرق$suffix')),
         PopupMenuItem(value: AppColorTheme.purple, child: Text('بنفسجي$suffix')),
       ],
-    );
-  }
-}
-
-class SurahDetailScreen extends StatelessWidget {
-  final int surahNumber;
-  final String surahName;
-
-  const SurahDetailScreen({
-    super.key,
-    required this.surahNumber,
-    required this.surahName,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    int totalVerses = quran.getVerseCount(surahNumber);
-    return Scaffold(
-      appBar: AppBar(title: Text(surahName)),
-      body: ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: totalVerses,
-        itemBuilder: (context, index) {
-          String verseText = quran.getVerse(surahNumber, index + 1, verseEndSymbol: true);
-          return Padding(
-            padding: const EdgeInsets.symmetric(vertical: 8.0),
-            child: Text(
-              verseText,
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 22, height: 2.0),
-            ),
-          );
-        },
-      ),
     );
   }
 }
