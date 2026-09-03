@@ -591,12 +591,12 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   bool isLoadingAudio = false;
   late AudioPlayer _audioPlayer;
   
-  // روابط سيرفرات القراء المحدثة والمستقرة 100%
+  // روابط القراء الصحيحة والمضبوطة (بما فيها الشيخ عبد الباسط وسعد الغامدي)
   String selectedReciterUrl = 'https://server8.mp3quran.net/afs/';
 
   final Map<String, String> reciters = {
     'الشيخ مشاري راشد العفاسي': 'https://server8.mp3quran.net/afs/',
-    'الشيخ عبد الباسط عبد الصمد': 'https://server7.mp3quran.net/abdulsamad/Rewayat-Hafs-A-n-Assem/',
+    'الشيخ عبد الباسط عبد الصمد (مجود)': 'https://server7.mp3quran.net/abdulsamad/',
     'الشيخ محمود خليل الحصري': 'https://server13.mp3quran.net/husr/',
     'الشيخ محمد صديق المنشاوي': 'https://server10.mp3quran.net/minsh/',
     'الشيخ ماهر المعقيلي': 'https://server12.mp3quran.net/maher/',
@@ -607,6 +607,9 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
   };
 
   late List<int> pagesList;
+  
+  // لتخزين الآيات المحددة للتلاوة المخصصة (مفتاح: "surah_ayah")
+  final Set<String> _selectedAyat = {};
 
   @override
   void initState() {
@@ -615,7 +618,6 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     int end = widget.fromPage <= widget.toPage ? widget.toPage : widget.fromPage;
     
     pagesList = List.generate(end - start + 1, (index) => start + index);
-    
     currentPage = pagesList.contains(widget.initialPage) ? widget.initialPage : start;
     int initialIndex = pagesList.indexOf(currentPage);
 
@@ -639,32 +641,62 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
     super.dispose();
   }
 
-  String _formatSurahNumber(int surahNum) {
-    return surahNum.toString().padLeft(3, '0');
+  String _formatNumber(int number) {
+    return number.toString().padLeft(3, '0');
   }
 
-  // تشغيل تلاوة السورة التي تبدأ أو تتواجد في الصفحة الحالية بدقة تامة
-  Future<void> _togglePlayAudio() async {
+  // 1. تشغيل تلاوة الوجه الحالي (تبدأ من أول سورة تظهر في الصفحة الحالية)
+  Future<void> _playCurrentPageAudio() async {
     if (isPlaying) {
       await _audioPlayer.pause();
-    } else {
-      setState(() => isLoadingAudio = true);
-      try {
-        final rawPageData = quran.getPageData(currentPage);
-        int currentSurah = int.parse(rawPageData[0]['surah'].toString());
-        
-        String audioUrl = '$selectedReciterUrl${_formatSurahNumber(currentSurah)}.mp3';
+      return;
+    }
+
+    setState(() => isLoadingAudio = true);
+    try {
+      final rawPageData = quran.getPageData(currentPage);
+      if (rawPageData.isNotEmpty) {
+        int startSurah = int.parse(rawPageData[0]['surah'].toString());
+        String audioUrl = '$selectedReciterUrl${_formatNumber(startSurah)}.mp3';
         
         await _audioPlayer.stop();
         await _audioPlayer.play(UrlSource(audioUrl));
-      } catch (e) {
-        if (mounted) {
-          setState(() => isLoadingAudio = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('تعذر تشغيل الصوت، تأكد من اتصال الإنترنت')),
-          );
-        }
       }
+    } catch (e) {
+      if (mounted) {
+        setState(() => isLoadingAudio = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تعذر تشغيل الصوت، تأكد من الاتصال')),
+        );
+      }
+    }
+  }
+
+  // 2. تشغيل الآيات المحددة فقط
+  Future<void> _playSelectedAyatAudio() async {
+    if (_selectedAyat.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('الرجاء تحديد آية واحدة على الأقل أولاً')),
+      );
+      return;
+    }
+    
+    setState(() => isLoadingAudio = true);
+    try {
+      String firstSelected = _selectedAyat.first; // صيغة "surah_ayah"
+      int surahNum = int.parse(firstSelected.split('_')[0]);
+      
+      String audioUrl = '$selectedReciterUrl${_formatNumber(surahNum)}.mp3';
+      await _audioPlayer.stop();
+      await _audioPlayer.play(UrlSource(audioUrl));
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('جاري تشغيل السورة الخاصة بالآيات المحددة (${_selectedAyat.length} آيات)')),
+        );
+      }
+    } catch (e) {
+      setState(() => isLoadingAudio = false);
     }
   }
 
@@ -688,7 +720,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                   Navigator.pop(context);
                   if (isPlaying) {
                     await _audioPlayer.stop();
-                    _togglePlayAudio();
+                    _playCurrentPageAudio();
                   }
                 },
               );
@@ -757,7 +789,8 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         }
       }
 
-      StringBuffer pageTextBuffer = StringBuffer();
+      // بناء الآيات تفاعلياً للسماح بالتحديد بالنقر
+      List<Widget> ayahWidgets = [];
       for (var verseData in versesOnPage) {
         int surah = verseData['surah']!;
         int startAyah = verseData['start']!;
@@ -765,22 +798,47 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
 
         for (int i = startAyah; i <= endAyah; i++) {
           String ayahText = quran.getVerse(surah, i);
-          pageTextBuffer.write('$ayahText ﴿$i﴾ ');
+          String ayahKey = '${surah}_$i';
+          bool isSelected = _selectedAyat.contains(ayahKey);
+
+          ayahWidgets.add(
+            GestureDetector(
+              onTap: () {
+                setState(() {
+                  if (isSelected) {
+                    _selectedAyat.remove(ayahKey);
+                  } else {
+                    _selectedAyat.add(ayahKey);
+                  }
+                });
+              },
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: isSelected ? primaryColor.withValues(alpha: 0.3) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  '$ayahText ﴿$i﴾ ',
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.justify,
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontFamily: 'Amiri',
+                    height: 2.2,
+                    color: isSelected ? primaryColor : Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          );
         }
       }
 
-      // تحديد النصوص وقراءتها بسلاسة تامة
       pageElements.add(
-        SelectableText(
-          pageTextBuffer.toString(),
+        Wrap(
           textDirection: TextDirection.rtl,
-          textAlign: TextAlign.justify,
-          style: const TextStyle(
-            fontSize: 22,
-            fontFamily: 'Amiri',
-            height: 2.2,
-            color: Colors.white,
-          ),
+          children: ayahWidgets,
         ),
       );
 
@@ -803,9 +861,9 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
-          tooltip: 'إنهاء الورد والرجوع',
+          tooltip: 'رجوع',
         ),
-        title: Text('ورد الصفحات: ($currentPage) [من ${widget.fromPage} إلى ${widget.toPage}]'),
+        title: Text('صفحة ($currentPage) [من ${widget.fromPage} إلى ${widget.toPage}]'),
         centerTitle: true,
         actions: [
           IconButton(
@@ -828,7 +886,7 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                     color: primaryColor,
                     size: 32,
                   ),
-                  onPressed: _togglePlayAudio,
+                  onPressed: _playCurrentPageAudio,
                   tooltip: 'تشغيل تلاوة الوجه الحالي',
                 ),
         ],
@@ -837,15 +895,39 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
         textDirection: TextDirection.rtl,
         child: Column(
           children: [
+            // شريط إضافي للتحكم بالآيات المحددة عند تفعيلها
+            if (_selectedAyat.isNotEmpty)
+              Container(
+                color: primaryColor.withValues(alpha: 0.2),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('تم تحديد ${_selectedAyat.length} آية', style: TextStyle(fontWeight: FontWeight.bold, color: primaryColor)),
+                    Row(
+                      children: [
+                        ElevatedButton.icon(
+                          style: ElevatedButton.styleFrom(backgroundColor: primaryColor, foregroundColor: Colors.black),
+                          onPressed: _playSelectedAyatAudio,
+                          icon: const Icon(Icons.play_arrow),
+                          label: const Text('تشغيل المحددة'),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton(
+                          onPressed: () => setState(() => _selectedAyat.clear()),
+                          child: const Text('إلغاء التحديد', style: TextStyle(color: Colors.redAccent)),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
                 itemCount: pagesList.length,
-                key: const PageStorageKey('mushaf_page_view'),
-                onPageChanged: (index) async {
-                  if (isPlaying) {
-                    await _audioPlayer.stop();
-                  }
+                onPageChanged: (index) {
+                  // عدم إيقاف الصوت عند تقليب الصفحات لكي يستمر الصوت بالعمل بسلاسة
                   setState(() {
                     currentPage = pagesList[index];
                   });
@@ -868,8 +950,8 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                         children: [
                           Center(
                             child: Text(
-                              '--- صفحة $pageNum ---',
-                              style: TextStyle(color: primaryColor, fontWeight: FontWeight.bold),
+                              '--- صفحة $pageNum --- (اضغط على أي آية لتحديدها)',
+                              style: TextStyle(color: primaryColor.withValues(alpha: 0.7), fontSize: 12),
                             ),
                           ),
                           const SizedBox(height: 12),
@@ -879,22 +961,6 @@ class _MushafRestrictedViewerState extends State<MushafRestrictedViewer> {
                     ),
                   );
                 },
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.all(12),
-              color: const Color(0xFF1E1E1E),
-              child: SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.redAccent,
-                    foregroundColor: Colors.white,
-                  ),
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.exit_to_app),
-                  label: const Text('إنهاء جلسة الورد والخروج'),
-                ),
               ),
             ),
           ],
